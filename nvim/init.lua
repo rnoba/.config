@@ -1,4 +1,5 @@
 _G.system = require("system");
+
 system.Map(
   "<leader>y",
   '"+y',
@@ -73,7 +74,8 @@ vim.opt.clipboard = "unnamed";
 vim.opt.cinoptions:append("l1,t0");
 vim.opt.completeopt = "menu,menuone,noinsert";
 
-require("build");
-require("plugins/init");
-
 vim.cmd.colorscheme("warm");
+
+require("plugins/init");
+require("build");
+require("lsp");

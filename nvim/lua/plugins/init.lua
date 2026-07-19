@@ -6,14 +6,72 @@ vim.pack.add({
 });
 
 vim.api.nvim_create_user_command("PackList", function()
-  --TODO(rnoba): format this
-  vim.print(vim.pack.get());
+  local lines = {};
+
+  for _, plugin in ipairs(vim.pack.get(nil, { info = false })) do
+    lines[#lines + 1] = string.format(
+      "%-24s %s",
+      plugin.spec.name,
+      plugin.spec.src
+    );
+  end
+
+  vim.api.nvim_echo({
+    { table.concat(lines, "\n") },
+  }, false, {});
+
 end, {});
+
+vim.api.nvim_create_user_command("PackRefresh", function(opts)
+  local stale = {};
+
+  for _, plugin in ipairs(vim.pack.get(nil, { info = false })) do
+    if not plugin.active then
+      stale[#stale + 1] = plugin.spec.name;
+    end
+  end
+
+  table.sort(stale);
+  if #stale == 0 then
+    vim.notify("PackRefresh: no stale plugins found");
+    return;
+  end
+
+  if not opts.bang then
+    local prompt = string.format(
+      "Remove %d stale plugin%s?\n\n%s",
+      #stale,
+      #stale == 1 and "" or "s",
+      table.concat(stale, "\n")
+    );
+
+    if vim.fn.confirm(prompt, "&Remove\n&Cancel", 2) ~= 1 then
+      return;
+    end
+  end
+
+  local ok, err = pcall(vim.pack.del, stale);
+  if not ok then
+    system.LogError("PackRefresh failed:\n" .. tostring(err));
+    return;
+  end
+
+  vim.notify(string.format(
+    "PackRefresh: removed %d plugin%s:\n%s",
+    #stale,
+    #stale == 1 and "" or "s",
+    table.concat(stale, "\n")
+  ));
+end,
+{
+  bang = true,
+  desc = "Remove plugins not declared through vim.pack.add()",
+});
 
 vim.api.nvim_create_user_command("PackRemove", function(opts)
   local plugins = opts.fargs;
   if #plugins == 0 then
-    vim.notify('Usage: :Uninstall plugin1 [plugin2 ...]', vim.log.levels.ERROR);
+    system.LogError("Usage: :Uninstall plugin1 [plugin2 ...]");
     return;
   end
 
@@ -24,11 +82,11 @@ vim.api.nvim_create_user_command("PackRemove", function(opts)
     if not choice then return end;
     local ok, err = pcall(vim.pack.del, plugins);
     if ok then
-      vim.notify('Uninstalled: ' .. table.concat(plugins, ', '), vim.log.levels.INFO);
+      system.LogInfo("Uninstalled: " .. table.concat(plugins, ', '));
       vim.cmd('redraw');
-      vim.notify('→ Run :restart to finish', vim.log.levels.WARN);
+      system.LogWarn("→ Run :restart to finish");
     else
-      vim.notify('Error: ' .. tostring(err), vim.log.levels.ERROR);
+      system.LogError("Error: " .. tostring(err));
     end
   end)
 end,

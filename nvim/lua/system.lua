@@ -31,10 +31,6 @@ function MODULE.Os()
   return OS;
 end
 
-function MODULE.Cwd()
-  return vim.fn.getcwd();
-end
-
 function MODULE.RequireProgram(name)
   if vim.fn.executable(name) ~= 1 then
     MODULE.LogError("system: Required program not found: " .. name); error(name);
@@ -53,6 +49,28 @@ function MODULE.BufferName(bufnr)
   return vim.api.nvim_buf_get_name(bufnr);
 end
 
+function MODULE.IsFileBuffer(bufnr)
+  if not vim.api.nvim_buf_is_valid(bufnr) then
+    return false;
+  end
+
+  if vim.bo[bufnr].buftype ~= "" then
+    return false;
+  end
+
+  local buffer_name = system.BufferName(bufnr);
+
+  if buffer_name == "" then
+    return false;
+  end
+
+  if vim.fn.isdirectory(buffer_name) == 1 then
+    return false;
+  end
+
+  return true;
+end
+
 function MODULE.BufferDirectory(bufnr)
   bufnr = bufnr or 0;
 
@@ -63,11 +81,6 @@ function MODULE.BufferDirectory(bufnr)
   end
 
   return vim.fn.getcwd();
-end
-
-function MODULE.BufferKind(bufnr)
-  bufnr = bufnr or 0;
-  return vim.bo[bufnr].filetype;
 end
 
 function MODULE.JoinPath(a, b)
@@ -81,14 +94,6 @@ function MODULE.Map(keys, func, desc, buffer, mode)
     buffer = buffer,
     desc   = desc,
   });
-end
-
-function MODULE.SetLspAttached(value)
-  HAS_LSP = value;
-end
-
-function MODULE.IsLspAttached()
-  return HAS_LSP;
 end
 
 return MODULE;

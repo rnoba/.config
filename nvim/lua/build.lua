@@ -1,5 +1,3 @@
--- vim.opt.tags:prepend("./.tags;");
-
 local C_SOURCE_PATTERNS = {
   "*.c",
   "*.h",
@@ -12,9 +10,12 @@ local C_SOURCE_PATTERNS = {
 };
 
 local BUILD_SCRIPT_NAME = "build.sh";
+
 if system.Os() == "Windows" then
   BUILD_SCRIPT_NAME = "build.bat";
 end
+
+vim.opt.tags:prepend("./.tags;");
 
 local function find_file(name)
   local matches = vim.fs.find(name, {
@@ -44,7 +45,7 @@ local function project_root()
 
   return vim.fs.root(system.BufferDirectory(), {
     ".git",
-  }) or system.Cwd();
+  }) or vim.fn.getcwd();
 end
 
 
@@ -188,10 +189,10 @@ local function show_build_output(output)
 
   local height = math.min(math.max(#output, 3), 30);
 
-  local buffer      = vim.api.nvim_create_buf(false, true);
+  local buffer        = vim.api.nvim_create_buf(false, true);
   build_output_buffer = buffer;
   vim.cmd("belowright split");
-  local window      = vim.api.nvim_get_current_win();
+  local window        = vim.api.nvim_get_current_win();
   build_output_window = window;
 
   vim.api.nvim_win_set_height(window, height);
@@ -206,9 +207,9 @@ local function show_build_output(output)
     end,
   });
 
-  vim.bo[buffer].buftype   = "nofile";
-  vim.bo[buffer].bufhidden = "wipe";
-  vim.bo[buffer].swapfile  = false;
+  vim.bo[buffer].buftype    = "nofile";
+  vim.bo[buffer].bufhidden  = "wipe";
+  vim.bo[buffer].swapfile   = false;
   vim.bo[buffer].modifiable = true;
   vim.api.nvim_buf_set_lines(buffer, 0, -1, false, output);
   vim.bo[buffer].modifiable = false;
@@ -302,9 +303,9 @@ local function run_build()
       end
 
       open_build_results(items);
-      if #lines ~= 0 then
-        close_build_output(); show_build_output(lines);
-      end
+      -- if #lines ~= 0 then
+      --   close_build_output(); show_build_output(lines);
+      -- end
 
       if result.code == 0 then
         system.LogWarn("Build succeeded with compiler diagnostics.");
@@ -315,6 +316,177 @@ local function run_build()
   end);
 end
 
-vim.keymap.set("n", "<C-b>", run_build, {
-  desc = "Build project and show errors",
+system.Map(
+  "<C-b>",
+  run_build,
+  "Build project and show errors"
+);
+
+local fzf = require("fzf-lua");
+
+local function current_buffer_is_c_source_file(bufnr)
+  bufnr = bufnr or 0;
+  if not vim.api.nvim_buf_is_valid(bufnr) then
+    return false;
+  end
+  local kind = vim.bo[bufnr].filetype;
+  return (kind == "c") or (kind == "cpp");
+end
+
+local function tags_file()
+  return system.JoinPath(project_root(), ".tags");
+end
+
+local function ensure_tags()
+  if vim.fn.filereadable(tags_file()) == 1 then
+    return true;
+  end
+
+  generate_tags({ silent = true; });
+  system.LogWarn("Tags are being generated. Retry when complete.");
+  return false;
+end
+
+local function jump_to_tag()
+  if not ensure_tags() then
+    return;
+  end
+
+  local tag = vim.fn.expand("<cword>");
+  if tag == "" then
+    return;
+  end
+
+  local matches = vim.fn.taglist("^" .. tag .. "$");
+  if #matches == 0 then
+    system.LogWarn("Could not find tag: '" .. tag .. "'");
+    return;
+  end
+
+  if #matches == 1 then
+    local ok, err = pcall(vim.cmd, "tag " .. vim.fn.escape(tag, [[ \|]]));
+    if not ok then
+      system.LogError(tostring(err));
+    end
+    return;
+  end
+
+  fzf.tags_grep_cword({
+    cwd    = project_root();
+    prompt = "Definitions> ";
+    winopts = {
+      title     = " " .. tag .. " ";
+      title_pos = "center";
+      height    = 0.70;
+      width     = 0.85;
+      preview = {
+        layout   = "vertical";
+        vertical = "down:55%";
+      };
+    };
+    fzf_opts = {
+      ["--no-multi"] = true;
+      ["--info"]     = "inline-right";
+      ["--header"]   = string.format("%d definitions found", #matches);
+    };
+  });
+end
+
+local function project_tags_for_word()
+  if not ensure_tags() then
+    return;
+  end
+
+  fzf.tags_grep_cword({ cwd = project_root(); });
+end
+
+local function project_references()
+  fzf.grep_cword({ cwd = project_root(); });
+end
+
+local function project_symbols()
+  if not ensure_tags() then
+    return;
+  end
+
+  fzf.tags_live_grep({ cwd = project_root(); });
+end
+
+local function buffer_symbols()
+  system.RequireProgram("ctags");
+
+  fzf.btags({ cwd = project_root(); });
+end
+
+local function attach_c_project_maps(bufnr)
+  if not current_buffer_is_c_source_file(bufnr) then
+    return;
+  end
+
+  system.Map(
+    "gO",
+    buffer_symbols,
+    "Open Document Symbols",
+    bufnr
+  );
+
+  system.Map(
+    "gd",
+    jump_to_tag,
+    "[G]oto [D]efinition",
+    bufnr
+  );
+
+  system.Map(
+    "gr",
+    project_references,
+    "[G]oto [R]eferences",
+    bufnr
+  );
+
+  system.Map(
+    "gu",
+    project_tags_for_word,
+    "[G]oto [I]mplementation",
+    bufnr
+  );
+
+  system.Map(
+    "<leader>D",
+    project_tags_for_word,
+    "Type [D]efinition",
+    bufnr
+  );
+
+  system.Map(
+    "<leader>ws",
+    project_symbols,
+    "[W]orkspace [S]ymbols",
+    bufnr
+  );
+
+  system.Map(
+    "gD",
+    jump_to_tag,
+    "[G]oto [D]eclaration",
+    bufnr
+  );
+end
+
+vim.api.nvim_create_autocmd("FileType", {
+  group = vim.api.nvim_create_augroup(
+    "rnoba-c-project-maps",
+    {
+      clear = true;
+    }
+  );
+
+  pattern = {
+    "c";
+    "cpp";
+  };
+
+  callback = function(event)
+    attach_c_project_maps(event.buf);
+  end;
 });
