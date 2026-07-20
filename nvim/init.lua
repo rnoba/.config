@@ -82,9 +82,11 @@ system.Map(
   "<cmd>silent !tmux neww tmux-sessionizer<CR>"
 );
 
-require("plugins/init");
 vim.cmd.colorscheme("warm");
 
+require("plugins");
+
 require("ui").Setup();
+
 require("build");
 require("lsp");

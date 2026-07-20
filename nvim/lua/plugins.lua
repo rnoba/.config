@@ -94,6 +94,6 @@ end,
   desc = 'Uninstall one or more vim.pack plugins',
 });
 
-require("plugins/fzf");
-require("plugins/undotree");
-require("plugins/gitsigns");
+require("plugins.fzf");
+require("plugins.undotree");
+require("plugins.gitsigns");
