@@ -86,8 +86,6 @@ system.Map(
 vim.cmd.colorscheme("warm");
 
 require("plugins");
-
-require("ui").Setup();
-
+require("ui");
 require("build");
 require("lsp");
