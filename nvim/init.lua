@@ -31,6 +31,7 @@ vim.o.showcmd = false;
 vim.o.ruler = false;
 vim.o.laststatus = 3;
 vim.o.statusline = "%=";
+vim.opt.fillchars = { eob = " " };
 
 vim.g.netrw_sort_sequence = [[[\/]$,\<core\%(\.\d\+\)\=,\.[a-np-z]$,\.cpp$,*,\.o$,\.obj$,\.info$,\.swp$,\.bak$,\~$]];
 vim.g.netrw_sort_by = "name";

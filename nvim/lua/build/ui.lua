@@ -47,10 +47,10 @@ end
 
 local function owner_is_open()
   return owner_buffer
-    and owner_window
-    and vim.api.nvim_buf_is_valid(owner_buffer)
-    and vim.api.nvim_win_is_valid(owner_window)
-    and vim.api.nvim_win_get_buf(owner_window) == owner_buffer;
+  and owner_window
+  and vim.api.nvim_buf_is_valid(owner_buffer)
+  and vim.api.nvim_win_is_valid(owner_window)
+  and vim.api.nvim_win_get_buf(owner_window) == owner_buffer;
 end
 
 local function panel_height(line_count)
@@ -136,9 +136,24 @@ local function configure_output(window, buffer)
     output_info.group
   );
 
-  system.Map("q", close_output, "Close build output", buffer);
-  system.Map("<Esc>", close_output, "Close build output", buffer);
-  system.Map("<C-c>", close_output, "Close build output", buffer);
+  system.Map(
+    "q",
+    close_output,
+    "Close build output",
+    buffer
+  );
+  system.Map(
+    "<Esc>",
+    close_output,
+    "Close build output",
+    buffer
+  );
+  system.Map(
+    "<C-c>",
+    close_output,
+    "Close build output",
+    buffer
+  );
 end
 
 local function open_output(options)
