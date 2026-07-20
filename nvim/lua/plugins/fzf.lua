@@ -4,6 +4,11 @@ fzf.setup({
   files = {
     multiprocess = false,
   },
+  file_ignore_patterns = { 
+    "node_modules/", 
+    "dist/", 
+    "%.git/" 
+  },
 });
 
 system.Map(
