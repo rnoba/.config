@@ -1,10 +1,10 @@
 if vim.g.colors_name then
-  vim.cmd("highlight clear")
+  vim.cmd("highlight clear");
 end
 
-vim.g.colors_name = "warm"
+vim.g.colors_name = "warm";
 
-local hl = vim.api.nvim_set_hl
+local hl = vim.api.nvim_set_hl;
 
 local c = {
   black       = "#020202",
@@ -31,13 +31,13 @@ local c = {
   pink        = "#FF44DD",
   magenta     = "#de2368",
 
-  bg          = "#020202",
+  bg          = "#0f0f10",
   bg_alt      = "#100202",
   bg_float    = "#0C0C0C",
   fg          = "#b99468",
   comment     = "#666666",
   cursor      = "#00EE00",
-}
+};
 
 -- ──────────────────────────────────────────────────────────────────────────────
 -- Base
@@ -111,8 +111,8 @@ hl(0, "PmenuSel",        { fg = "#ffffff", bg = "#63523d" })
 hl(0, "PmenuSbar",       { bg = "#222425" })
 hl(0, "PmenuThumb",      { bg = "#b99468" })
 
-hl(0, "StatusLine",      { fg = c.fg, bg = "#222425" })
-hl(0, "StatusLineNC",    { fg = c.comment, bg = "#101010" })
+hl(0, "StatusLine",      { fg = c.fg,      bg = c.bg })
+hl(0, "StatusLineNC",    { fg = c.comment, bg = c.bg })
 
 hl(0, "TabLine",         { fg = c.comment, bg = "#101010" })
 hl(0, "TabLineFill",     { bg = "#101010" })
@@ -172,7 +172,3 @@ hl(0, "@tag",                    { fg = "#c9598a" })
 
 hl(0, "@punctuation.bracket",    { fg = "#809ba2" })
 hl(0, "@punctuation.delimiter",  { fg = c.amber })
-
--- hl(0, "TelescopeNormal",        { bg = "#0C0C0C" })
--- hl(0, "TelescopeBorder",        { fg = "#63523d", bg = "#0C0C0C" })
--- hl(0, "@markup.heading",        { fg = c.orange, bold = true })

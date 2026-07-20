@@ -20,7 +20,7 @@ local SERVERS = {
     };
 
     root_dir = function(bufnr, on_dir)
-      local buffer_name = system.BufferName(bufnr);
+      local buffer_name = vim.api.nvim_buf_get_name(bufnr);
 
       if buffer_name == "" then
         return;
@@ -99,6 +99,13 @@ local SERVERS = {
     filetypes = {
       "lua";
     };
+    test = function()
+      local result = system.TestProgram("lua-language-server");
+      if not result then
+        system.LogError("Could not find required program for Lua LSP: 'lua-language-server'");
+      end
+      return result;
+    end;
 
     root_markers = {
       ".luarc.json";

@@ -1,7 +1,6 @@
 vim.pack.add({
   "https://github.com/lewis6991/gitsigns.nvim",
   "https://github.com/ibhagwan/fzf-lua",
-  "https://github.com/folke/trouble.nvim",
   "https://github.com/mbbill/undotree",
 });
 
@@ -96,6 +95,5 @@ end,
 });
 
 require("plugins/fzf");
-require("plugins/trouble");
 require("plugins/undotree");
 require("plugins/gitsigns");
