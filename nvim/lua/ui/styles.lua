@@ -55,35 +55,35 @@ function MODULE.Setup()
 
   set_highlight("RnobaPanelSeparator", {
     fg = normal.fg;
-    bg = normal.bg;
+    bg = background;
   });
 
   set_highlight("RnobaPanelWinBar", {
     fg   = normal.fg;
-    bg   = normal.bg;
+    bg   = background;
     bold = true;
   });
 
   set_highlight("RnobaPanelMuted", {
     fg = comment.fg or winbar_nc.fg or normal_nc.fg;
-    bg = winbar_background;
+    bg = background;
   });
 
   set_highlight("RnobaPanelSuccess", {
     fg   = success.fg or normal.fg;
-    bg   = winbar_background;
+    bg   = background;
     bold = true;
   });
 
   set_highlight("RnobaPanelWarn", {
     fg   = warning.fg or normal.fg;
-    bg   = winbar_background;
+    bg   = background;
     bold = true;
   });
 
   set_highlight("RnobaPanelError", {
     fg   = failure.fg or normal.fg;
-    bg   = winbar_background;
+    bg   = background;
     bold = true;
   });
 end

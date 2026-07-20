@@ -21,7 +21,8 @@ local COMPILER_ERROR_FORMAT = table.concat({
   "%-G%.%#";
 }, ",");
 
-local running = false;
+local running     = false;
+local build_begin = 0;
 
 local function clean_stream(stream)
   if not stream or stream == "" then
@@ -77,14 +78,18 @@ end
 local function finish(build_file, root, result)
   running = false;
 
-  local output = clean_stream(result.stdout);
+  local build_elapsed_ms = (vim.uv.hrtime() - build_begin) / 1e6;
+  local elapsed = string.format("%.2fs", build_elapsed_ms / 1000);
+
+  local output            = clean_stream(result.stdout);
   local diagnostic_output = diagnostic_lines(result);
-  local items = diagnostics(diagnostic_output);
+
+  local items   = diagnostics(diagnostic_output);
   local success = result.code == 0;
 
   ui.RecordOutput(output, {
     name   = build_file.name;
-    status = success and "succeeded" or "failed";
+    status = success and ("succeeded"        or "failed") .. " - " .. elapsed;
     group  = success and "RnobaPanelSuccess" or "RnobaPanelError";
   });
 
@@ -117,10 +122,9 @@ local function finish(build_file, root, result)
       focus       = false;
       allow_empty = true;
     });
-
     -- system.LogWarn("Build succeeded with compiler diagnostics.");
-    -- else
-    --   system.LogWarn("Build failed with status " .. result.code .. ".");
+  -- else
+  --   system.LogWarn("Build failed with status " .. result.code .. ".");
   end
 end
 
@@ -152,9 +156,11 @@ function MODULE.Run()
   vim.cmd("silent! wall");
   ui.Reset();
 
-  running = true;
+  running     = true;
+  build_begin = vim.uv.hrtime(); 
 
   local root = vim.fs.dirname(build_file.path);
+
   system.LogInfo("Building " .. build_file.name .. "...");
 
   vim.system(command, {
@@ -165,6 +171,7 @@ function MODULE.Run()
       finish(build_file, root, result);
     end);
   end);
+
 end
 
 function MODULE.Setup()

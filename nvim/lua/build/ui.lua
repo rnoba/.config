@@ -145,7 +145,11 @@ local function open_output(options)
   if not owner_is_open() then
     return;
   end
-  options = options or {};
+
+  options = options or {
+    allow_empty = true;
+  };
+
 
   if #output_lines == 0 and options.allow_empty ~= true then
     system.LogWarn("No build output available.");
@@ -184,6 +188,7 @@ local function open_output(options)
   elseif vim.api.nvim_win_is_valid(previous_window) then
     vim.api.nvim_set_current_win(previous_window);
   end
+
 end
 
 local function relative_path(root, path)
@@ -420,7 +425,7 @@ local function open_current_results()
     return;
   end
 
-  local list = vim.fn.getqflist({ size = 0; context = 0; });
+  local list    = vim.fn.getqflist({ size = 0; context = 0; });
   local context = list.context or {};
 
   if context.rnoba_build ~= true or list.size == 0 then
@@ -428,8 +433,11 @@ local function open_current_results()
     return;
   end
 
+  local parent_window = vim.api.nvim_get_current_win();
   vim.cmd("botright copen " .. panel_height(list.size));
   configure_results(vim.api.nvim_get_current_win());
+
+  vim.api.nvim_set_current_win(parent_window);
 end
 
 function MODULE.RecordOutput(lines, options)
@@ -488,10 +496,12 @@ function MODULE.ClearResults()
     };
     quickfixtextfunc = "v:lua.RnobaBuildQuickfixText";
   });
+
 end
 
 function MODULE.Reset()
   close_output();
+
   MODULE.ClearResults();
   output_lines = {};
 end
