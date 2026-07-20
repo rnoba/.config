@@ -95,4 +95,3 @@ end,
 
 require("plugins.fzf");
 require("plugins.undotree");
-require("plugins.gitsigns");
