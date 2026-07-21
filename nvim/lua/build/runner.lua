@@ -2,8 +2,6 @@ local project = require("build.project");
 local tags    = require("build.tags");
 local ui      = require("build.ui");
 
-local MODULE = {};
-
 local COMPILER_ERROR_FORMAT = table.concat({
   "%E%f:%l:%c: fatal error: %m";
   "%E%f:%l:%c: error: %m";
@@ -89,7 +87,7 @@ local function finish(build_file, root, result)
 
   ui.RecordOutput(output, {
     name   = build_file.name;
-    status = success and ("succeeded"        or "failed") .. " - " .. elapsed;
+    status = (success and "succeeded" or "failed") .. " - " .. elapsed;
     group  = success and "RnobaPanelSuccess" or "RnobaPanelError";
   });
 
@@ -122,13 +120,10 @@ local function finish(build_file, root, result)
       focus       = false;
       allow_empty = true;
     });
-    -- system.LogWarn("Build succeeded with compiler diagnostics.");
-  -- else
-  --   system.LogWarn("Build failed with status " .. result.code .. ".");
   end
 end
 
-function MODULE.Run()
+local function run()
   if running then
     system.LogWarn("A build is already running.");
     return;
@@ -157,7 +152,7 @@ function MODULE.Run()
   ui.Reset();
 
   running     = true;
-  build_begin = vim.uv.hrtime(); 
+  build_begin = vim.uv.hrtime();
 
   local root = vim.fs.dirname(build_file.path);
 
@@ -171,31 +166,26 @@ function MODULE.Run()
       finish(build_file, root, result);
     end);
   end);
-
 end
 
-function MODULE.Setup()
-  vim.api.nvim_create_user_command("Build", MODULE.Run, {
-    desc = "Build the current project.";
+vim.api.nvim_create_user_command("Build", run, {
+  desc = "Build the current project.";
+});
+
+vim.api.nvim_create_autocmd("BufEnter", {
+  group = vim.api.nvim_create_augroup("rnoba-project-build-mappings", {
+    clear = true;
   });
+  callback = function(event)
+    if vim.bo[event.buf].buftype ~= "" then
+      return;
+    end
 
-  vim.api.nvim_create_autocmd("BufEnter", {
-    group = vim.api.nvim_create_augroup("rnoba-project-build-mappings", {
-      clear = true;
-    });
-    callback = function(event)
-      if vim.bo[event.buf].buftype ~= "" then
-        return;
-      end
-
-      system.Map(
-        "<C-b>",
-        MODULE.Run,
-        "Build project and show errors",
-        event.buf
-      );
-    end;
-  });
-end
-
-return MODULE;
+    system.Map(
+      "<C-b>",
+      run,
+      "Build project and show errors",
+      event.buf
+    );
+  end;
+});

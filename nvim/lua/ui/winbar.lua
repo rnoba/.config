@@ -1,7 +1,5 @@
 local styles = require("ui.styles");
 
-local MODULE = {};
-
 local function configure(window)
   if not vim.api.nvim_win_is_valid(window) then
     return;
@@ -20,21 +18,17 @@ local function configure(window)
   vim.wo[window].winbar = styles.FileWinbar();
 end
 
-function MODULE.Setup()
-  local group = vim.api.nvim_create_augroup("rnoba-winbar", {
-    clear = true;
-  });
+local group = vim.api.nvim_create_augroup("rnoba-winbar", {
+  clear = true;
+});
 
-  vim.api.nvim_create_autocmd({
-    "VimEnter";
-    "WinNew";
-    "BufWinEnter";
-  }, {
-    group = group;
-    callback = function()
-      configure(vim.api.nvim_get_current_win());
-    end;
-  });
-end
-
-return MODULE;
+vim.api.nvim_create_autocmd({
+  "VimEnter";
+  "WinNew";
+  "BufWinEnter";
+}, {
+  group = group;
+  callback = function()
+    configure(vim.api.nvim_get_current_win());
+  end;
+});

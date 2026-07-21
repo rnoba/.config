@@ -17,21 +17,17 @@ local function statusline_escape(value)
   return tostring(value):gsub("%%", "%%%%");
 end
 
-function MODULE.Setup()
-  local normal       = highlight("Normal");
-  local normal_nc    = highlight("NormalNC");
-  local normal_float = highlight("NormalFloat");
-  local cursor_line  = highlight("CursorLine");
-  local winbar       = highlight("WinBar");
-  local winbar_nc    = highlight("WinBarNC");
-  local comment      = highlight("Comment");
-  local separator    = highlight("WinSeparator");
-  local success      = highlight("DiagnosticOk");
-  local warning      = highlight("DiagnosticWarn");
-  local failure      = highlight("DiagnosticError");
+local function setup()
+  local normal      = highlight("Normal");
+  local normal_nc   = highlight("NormalNC");
+  local cursor_line = highlight("CursorLine");
+  local winbar_nc   = highlight("WinBarNC");
+  local comment     = highlight("Comment");
+  local success     = highlight("DiagnosticOk");
+  local warning     = highlight("DiagnosticWarn");
+  local failure     = highlight("DiagnosticError");
 
-  local background        = normal.bg;
-  local winbar_background = winbar.bg or cursor_line.bg or background;
+  local background = normal.bg;
 
   set_highlight("RnobaPanelNormal", {
     fg = normal.fg;
@@ -145,5 +141,12 @@ function MODULE.FileWinbar()
     "  %P ";
   });
 end
+
+setup();
+
+vim.api.nvim_create_autocmd("ColorScheme", {
+  group = vim.api.nvim_create_augroup("rnoba-ui-highlights", { clear = true; });
+  callback = setup;
+});
 
 return MODULE;

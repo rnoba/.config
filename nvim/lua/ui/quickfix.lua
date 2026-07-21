@@ -1,7 +1,5 @@
 local styles = require("ui.styles");
 
-local MODULE = {};
-
 local function close()
   vim.cmd("silent! cclose");
 end
@@ -44,14 +42,10 @@ local function configure(window)
   );
 end
 
-function MODULE.Setup()
-  vim.api.nvim_create_autocmd("FileType", {
-    group   = vim.api.nvim_create_augroup("rnoba-quickfix-window", { clear = true; });
-    pattern = "qf";
-    callback = function()
-      configure(vim.api.nvim_get_current_win());
-    end;
-  });
-end
-
-return MODULE;
+vim.api.nvim_create_autocmd("FileType", {
+  group   = vim.api.nvim_create_augroup("rnoba-quickfix-window", { clear = true; });
+  pattern = "qf";
+  callback = function()
+    configure(vim.api.nvim_get_current_win());
+  end;
+});

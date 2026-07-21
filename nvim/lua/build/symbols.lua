@@ -2,8 +2,6 @@ local fzf     = require("fzf-lua");
 local project = require("build.project");
 local tags    = require("build.tags");
 
-local MODULE = {};
-
 local function is_c_source(buffer)
   if not vim.api.nvim_buf_is_valid(buffer) then
     return false;
@@ -132,19 +130,15 @@ local function attach(buffer)
   );
 end
 
-function MODULE.Setup()
-  vim.api.nvim_create_autocmd("FileType", {
-    group = vim.api.nvim_create_augroup("rnoba-c-project-maps", {
-      clear = true;
-    });
-    pattern = {
-      "c";
-      "cpp";
-    };
-    callback = function(event)
-      attach(event.buf);
-    end;
+vim.api.nvim_create_autocmd("FileType", {
+  group = vim.api.nvim_create_augroup("rnoba-c-project-maps", {
+    clear = true;
   });
-end
-
-return MODULE;
+  pattern = {
+    "c";
+    "cpp";
+  };
+  callback = function(event)
+    attach(event.buf);
+  end;
+});

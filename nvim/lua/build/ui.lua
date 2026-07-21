@@ -11,6 +11,7 @@ local closing_owner = false;
 local output_buffer = nil;
 local output_window = nil;
 local output_lines  = {};
+
 local output_info   = {
   name   = "Build";
   status = "output";
@@ -206,6 +207,15 @@ local function open_output(options)
 
 end
 
+local function toggle_output()
+  if output_window and vim.api.nvim_win_is_valid(output_window) then
+    close_output();
+    return;
+  end
+
+  open_output();
+end
+
 local function relative_path(root, path)
   if path == "" then
     return "";
@@ -257,7 +267,7 @@ local function item_text(item)
   return vim.trim(tostring(item.text or ""):gsub("[\r\n]+", " "));
 end
 
-function MODULE.QuickfixText(info)
+local function quickfix_text(info)
   local list = vim.fn.getqflist({
     id      = info.id;
     items   = 0;
@@ -429,7 +439,7 @@ local function configure_results(window)
   );
   system.Map(
     "o",
-    MODULE.ToggleOutput,
+    toggle_output,
     "Toggle raw build output",
     buffer
   );
@@ -474,15 +484,6 @@ function MODULE.OpenOutput(options)
   open_output(options);
 end
 
-function MODULE.ToggleOutput()
-  if output_window and vim.api.nvim_win_is_valid(output_window) then
-    close_output();
-    return;
-  end
-
-  open_output();
-end
-
 function MODULE.OpenResults(items, options)
   options = options or {};
 
@@ -511,7 +512,6 @@ function MODULE.ClearResults()
     };
     quickfixtextfunc = "v:lua.RnobaBuildQuickfixText";
   });
-
 end
 
 function MODULE.Reset()
@@ -521,62 +521,60 @@ function MODULE.Reset()
   output_lines = {};
 end
 
-function MODULE.Setup()
-  local owner_group = vim.api.nvim_create_augroup("rnoba-build-owner", {
-    clear = true;
-  });
+local owner_group = vim.api.nvim_create_augroup("rnoba-build-owner", {
+  clear = true;
+});
 
-  vim.api.nvim_create_autocmd("QuitPre", {
-    group    = owner_group;
-    callback = function()
-      if owner_window ~= vim.api.nvim_get_current_win() then
-        return;
-      end
+vim.api.nvim_create_autocmd("QuitPre", {
+  group    = owner_group;
+  callback = function()
+    if owner_window ~= vim.api.nvim_get_current_win() then
+      return;
+    end
 
-      close_owned_panels();
-    end;
-  });
+    close_owned_panels();
+  end;
+});
 
-  vim.api.nvim_create_autocmd({
-    "BufDelete";
-    "BufWipeout";
-  }, {
-    group    = owner_group;
-    callback = function(event)
-      if event.buf ~= owner_buffer then
-        return;
-      end
+vim.api.nvim_create_autocmd({
+  "BufDelete";
+  "BufWipeout";
+}, {
+  group    = owner_group;
+  callback = function(event)
+    if event.buf ~= owner_buffer then
+      return;
+    end
 
-      close_owned_panels();
-    end;
-  });
+    close_owned_panels();
+  end;
+});
 
-  _G.RnobaBuildQuickfixText = function(info)
-    return MODULE.QuickfixText(info);
-  end
-
-  vim.api.nvim_create_user_command("BuildOutput", function()
-    MODULE.ToggleOutput();
-  end,
-  {
-    desc = "Toggle the latest raw build output.";
-  });
-
-  vim.api.nvim_create_user_command("BuildResults", function()
-    open_current_results();
-  end,
-  {
-    desc = "Open the latest build results.";
-  });
-
-  vim.api.nvim_create_autocmd("FileType", {
-    group   = vim.api.nvim_create_augroup("rnoba-build-results-window", { clear = true; });
-    pattern = "qf";
-    callback = function()
-      configure_results(vim.api.nvim_get_current_win());
-    end;
-  });
+_G.RnobaBuildQuickfixText = function(info)
+  return quickfix_text(info);
 end
+
+vim.api.nvim_create_user_command("BuildOutput", function()
+  toggle_output();
+end,
+{
+  desc = "Toggle the latest raw build output.";
+});
+
+vim.api.nvim_create_user_command("BuildResults", function()
+  open_current_results();
+end,
+{
+  desc = "Open the latest build results.";
+});
+
+vim.api.nvim_create_autocmd("FileType", {
+  group   = vim.api.nvim_create_augroup("rnoba-build-results-window", { clear = true; });
+  pattern = "qf";
+  callback = function()
+    configure_results(vim.api.nvim_get_current_win());
+  end;
+});
 
 function MODULE.SetOwner(buffer, window)
   owner_buffer = buffer;

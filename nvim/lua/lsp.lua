@@ -300,23 +300,6 @@ vim.api.nvim_create_autocmd("LspAttach", {
   end
 });
 
-vim.api.nvim_create_autocmd("LspDetach", {
-  group = LSP_ATTACH_GROUP;
-
-  callback = function(event)
-    vim.schedule(function()
-      if not vim.api.nvim_buf_is_valid(event.buf) then
-        return;
-      end
-
-      local clients = vim.lsp.get_clients({
-        bufnr = event.buf;
-      });
-
-    end);
-  end;
-});
-
 vim.diagnostic.config({
   severity_sort = true;
 

@@ -1,7 +1,7 @@
 local MODULE = {};
 
 local VIM_OS_NAME = vim.uv.os_uname().sysname;
-local HAS_LSP     = false;
+local CACHE_DIR   = vim.fn.stdpath("cache");
 local OS          = "None";
 
 if VIM_OS_NAME:find("Linux", 1, true) then
@@ -25,23 +25,18 @@ end
 function MODULE.Os()
   if OS == "None" then
     MODULE.LogError("system: OS not supported: " .. VIM_OS_NAME);
-    error("NOOOOOOO");
+    error();
   end
 
   return OS;
 end
 
-function MODULE.RequireProgram(name)
-  if vim.fn.executable(name) ~= 1 then
-    MODULE.LogError("system: Required program not found: " .. name); error(name);
-  end
+function MODULE.CacheDir()
+  return CACHE_DIR;
 end
 
 function MODULE.TestProgram(name)
-  if vim.fn.executable(name) ~= 1 then
-    return false;
-  end
-  return true;
+  return vim.fn.executable(name) == 1;
 end
 
 function MODULE.IsFileBuffer(bufnr)
