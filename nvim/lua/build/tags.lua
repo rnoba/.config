@@ -94,13 +94,6 @@ end
 
 vim.opt.tags:prepend(project_tags_path());
 
-vim.api.nvim_create_user_command("TagsSystemUpdate", function()
-  generate_system_tags();
-end,
-{
-  desc = "Generate " .. system.Os() .. " system tags.";
-});
-
 vim.api.nvim_create_user_command("TagsUpdate", function()
   MODULE.Generate();
 end, {
