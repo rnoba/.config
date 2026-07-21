@@ -1,7 +1,6 @@
 local MODULE = {};
 
 local VIM_OS_NAME = vim.uv.os_uname().sysname;
-local CACHE_DIR   = vim.fn.stdpath("cache");
 local OS          = "None";
 
 if VIM_OS_NAME:find("Linux", 1, true) then
@@ -29,10 +28,6 @@ function MODULE.Os()
   end
 
   return OS;
-end
-
-function MODULE.CacheDir()
-  return CACHE_DIR;
 end
 
 function MODULE.TestProgram(name)
