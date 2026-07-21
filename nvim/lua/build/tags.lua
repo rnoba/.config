@@ -122,8 +122,4 @@ vim.api.nvim_create_autocmd("BufWritePost", {
   end;
 });
 
-if vim.fn.filereadable(system_tags_path()) ~= 1 then
-  generate_system_tags({ silent = true; });
-end
-
 return MODULE;
