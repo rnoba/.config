@@ -2,6 +2,21 @@ local fzf     = require("fzf-lua");
 local project = require("build.project");
 local tags    = require("build.tags");
 
+local TAG_KINDS = {
+  c = "class";
+  d = "macro";
+  e = "enum";
+  f = "function";
+  g = "enum member";
+  m = "member";
+  n = "namespace";
+  p = "prototype";
+  s = "struct";
+  t = "typedef";
+  u = "union";
+  v = "variable";
+};
+
 local function is_c_source(buffer)
   if not vim.api.nvim_buf_is_valid(buffer) then
     return false;
@@ -11,13 +26,33 @@ local function is_c_source(buffer)
   return filetype == "c" or filetype == "cpp";
 end
 
-local function jump_to_tag()
-  if not tags.Ensure() then
-    return;
-  end
 
+local function current_tag()
   local tag = vim.fn.expand("<cword>");
   if tag == "" then
+    return nil;
+  end
+  return tag;
+end
+
+local function jump_to_tag(tag, index)
+  local command = "tag " .. vim.fn.escape(tag, [[ \|]]);
+
+  if index then
+    command = index .. command;
+  end
+
+  local ok, message = pcall(vim.cmd, command);
+  if not ok then
+    system.LogError(tostring(message));
+  end
+
+  return ok;
+end
+
+local function try_jump_to_tag_global()
+  local tag = current_tag();
+  if not tag then
     return;
   end
 
@@ -28,38 +63,33 @@ local function jump_to_tag()
   end
 
   if #matches == 1 then
-    local ok, message = pcall(vim.cmd, "tag " .. vim.fn.escape(tag, [[ \|]]));
-    if not ok then
-      system.LogError(tostring(message));
-    end
+    jump_to_tag(tag);
     return;
   end
 
-  fzf.tags_grep_cword({
-    cwd    = project.Root();
-    prompt = "Definitions> ";
-    winopts = {
-      title     = " " .. tag .. " ";
-      title_pos = "center";
-      height    = 0.70;
-      width     = 0.85;
-      preview = {
-        layout   = "vertical";
-        vertical = "down:55%";
-      };
-    };
-    fzf_opts = {
-      ["--no-multi"] = true;
-      ["--info"]     = "inline-right";
-      ["--header"]   = string.format("%d definitions found", #matches);
-    };
-  });
-end
+  vim.ui.select(matches, {
+    prompt = string.format("%d definitions found", #matches);
+    format_item = function(match)
+      local kind     = TAG_KINDS[match.kind] or match.kind or "unknown";
+      local path     = vim.fn.fnamemodify(match.filename or "", ":~:.");
+      local location = match.cmd and (":" .. match.cmd) or "";
 
-local function tags_for_word()
-  if tags.Ensure() then
-    fzf.tags_grep_cword({ cwd = project.Root(); });
-  end
+      return string.format(
+        "%-12s %-4s %s%s",
+        "[" .. kind .. "]",
+        match.name or "",
+        path,
+        location
+      );
+    end;
+  }, function(_, index)
+    if not index then
+      return;
+    end
+
+    jump_to_tag(tag, index);
+  end);
+
 end
 
 local function references()
@@ -94,7 +124,7 @@ local function attach(buffer)
   );
   system.Map(
     "gd",
-    jump_to_tag,
+    try_jump_to_tag_global,
     "[G]oto [D]efinition",
     buffer
   );
@@ -105,27 +135,9 @@ local function attach(buffer)
     buffer
   );
   system.Map(
-    "gu",
-    tags_for_word,
-    "[G]oto [I]mplementation",
-    buffer
-  );
-  system.Map(
-    "<leader>D",
-    tags_for_word,
-    "Type [D]efinition",
-    buffer
-  );
-  system.Map(
     "<leader>ws",
     project_symbols,
     "[W]orkspace [S]ymbols",
-    buffer
-  );
-  system.Map(
-    "gD",
-    jump_to_tag,
-    "[G]oto [D]eclaration",
     buffer
   );
 end
