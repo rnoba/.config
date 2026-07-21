@@ -94,6 +94,16 @@ end
 
 vim.opt.tags:prepend(project_tags_path());
 
+if vim.env.HOME ~= "" then
+  local CACHE_DIR = vim.fs.joinpath(vim.env.XDG_CACHE_HOME or vim.fs.joinpath(vim.env.HOME, ".local", "cache"));
+  if system.Os() == "Windows" then
+    CACHE_DIR = vim.fs.joinpath(vim.env.HOME, ".cache");
+  end
+
+  vim.opt.tags:prepend(vim.fs.joinpath(CACHE_DIR, "tags", "system.tags"));
+  vim.opt.tags:prepend(vim.fs.joinpath(CACHE_DIR, "tags", "vulkan.tags"));
+end
+
 vim.api.nvim_create_user_command("TagsUpdate", function()
   MODULE.Generate();
 end, {
