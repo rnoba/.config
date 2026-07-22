@@ -1,10 +1,6 @@
 local MODULE = {};
 
-local BUILD_SCRIPT_NAME = "build.sh";
-
-if system.Os() == "Windows" then
-  BUILD_SCRIPT_NAME = "build.bat";
-end
+local BUILD_SCRIPT_NAME = system.Os() == "Windows" and "build.bat" or "build.sh";
 
 local function find_file(name)
   local matches = vim.fs.find(name, {
@@ -17,11 +13,7 @@ local function find_file(name)
   return matches[1];
 end
 
-function MODULE.BuildScriptName()
-  return BUILD_SCRIPT_NAME;
-end
-
-function MODULE.FindBuildFile()
+local function find_build_file()
   local script = find_file(BUILD_SCRIPT_NAME);
   if script then
     return {
@@ -43,18 +35,7 @@ function MODULE.FindBuildFile()
   return nil;
 end
 
-function MODULE.Root()
-  local build_file = MODULE.FindBuildFile();
-  if build_file then
-    return vim.fs.dirname(build_file.path);
-  end
-
-  return vim.fs.root(system.BufferDirectory(), {
-    ".git";
-  }) or vim.fn.getcwd();
-end
-
-function MODULE.Command(build_file)
+local function build_command(build_file)
   if build_file.kind == "make" then
     if not system.TestProgram("make") then
       return nil, "Required program not found: make";
@@ -91,6 +72,34 @@ function MODULE.Command(build_file)
   end
 
   return nil, "OS not supported";
+end
+
+function MODULE.Resolve()
+  local build_file = find_build_file();
+  if not build_file then
+    return nil, "Could not find '" .. BUILD_SCRIPT_NAME .. "' or 'Makefile'.";
+  end
+
+  local command, message = build_command(build_file);
+  if not command then
+    return nil, message;
+  end
+
+  build_file.command = command;
+  build_file.root    = vim.fs.dirname(build_file.path);
+
+  return build_file;
+end
+
+function MODULE.Root()
+  local build_file = find_build_file();
+  if build_file then
+    return vim.fs.dirname(build_file.path);
+  end
+
+  return vim.fs.root(system.BufferDirectory(), {
+    ".git";
+  }) or vim.fn.getcwd();
 end
 
 return MODULE;

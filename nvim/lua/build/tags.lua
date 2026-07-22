@@ -1,7 +1,8 @@
 local project = require("build.project");
 
-local PROJECT_TAGS_FILE_NAME = ".tags";
 local MODULE = {};
+
+local PROJECT_TAGS_FILE_NAME = ".tags";
 
 local C_SOURCE_PATTERNS = {
   "*.c";
@@ -14,14 +15,48 @@ local C_SOURCE_PATTERNS = {
   "*.hxx";
 };
 
+local running = false;
+local pending = false;
+
 local function project_tags_path()
   return vim.fs.joinpath(project.Root(), PROJECT_TAGS_FILE_NAME);
 end
 
-local running = false;
-local pending = false;
+local function system_tags_directory()
+  if system.Os() == "Windows" then
+    return vim.fs.joinpath(vim.uv.os_homedir(), ".cache", "tags");
+  end
 
-function MODULE.Generate(options)
+  local cache = vim.env.XDG_CACHE_HOME;
+  if not cache or cache == "" then
+    cache = vim.fs.joinpath(vim.uv.os_homedir(), ".cache");
+  end
+
+  return vim.fs.joinpath(cache, "tags");
+end
+
+local function add_system_tags()
+  local directory = system_tags_directory();
+  local names = {
+    system.Os() == "Windows" and "windows-c.tags" or "linux-c.tags";
+    "system.tags";
+  };
+
+  for _, name in ipairs(names) do
+    local path = vim.fs.joinpath(directory, name);
+    if vim.fn.filereadable(path) == 1 then
+      vim.opt.tags:append(path);
+      break;
+    end
+  end
+
+  local vulkan_tags = vim.fs.joinpath(directory, "vulkan.tags");
+  if vim.fn.filereadable(vulkan_tags) == 1 then
+    vim.opt.tags:append(vulkan_tags);
+  end
+end
+
+local function generate(options)
   options = options or {};
 
   if not system.TestProgram("ctags") then
@@ -74,7 +109,7 @@ function MODULE.Generate(options)
 
       if pending then
         pending = false;
-        MODULE.Generate({ silent = true; });
+        generate({ silent = true; });
       end
     end);
   end);
@@ -83,29 +118,22 @@ function MODULE.Generate(options)
 end
 
 function MODULE.Ensure()
-  if vim.fn.filereadable(project_tags_path()) == 1 then
-    return true;
+  local tags_file = project_tags_path();
+  if vim.fn.filereadable(tags_file) == 1 then
+    return tags_file;
   end
 
-  MODULE.Generate({ silent = true; });
+  generate({ silent = true; });
   system.LogWarn("Tags are being generated. Retry when complete.");
-  return false;
+
+  return nil;
 end
 
-vim.opt.tags:prepend(project_tags_path());
-
-if vim.env.HOME ~= "" then
-  local CACHE_DIR = vim.fs.joinpath(vim.env.XDG_CACHE_HOME or vim.fs.joinpath(vim.env.HOME, ".local", "cache"));
-  if system.Os() == "Windows" then
-    CACHE_DIR = vim.fs.joinpath(vim.env.HOME, ".cache");
-  end
-
-  vim.opt.tags:prepend(vim.fs.joinpath(CACHE_DIR, "tags", "system.tags"));
-  vim.opt.tags:prepend(vim.fs.joinpath(CACHE_DIR, "tags", "vulkan.tags"));
-end
+vim.opt.tags:prepend("./.tags;");
+add_system_tags();
 
 vim.api.nvim_create_user_command("TagsUpdate", function()
-  MODULE.Generate();
+  generate();
 end, {
   desc = "Generate C/C++ project tags.";
 });
@@ -127,7 +155,7 @@ vim.api.nvim_create_autocmd("BufWritePost", {
   pattern = C_SOURCE_PATTERNS;
   callback = function()
     if vim.fn.filereadable(project_tags_path()) == 1 then
-      MODULE.Generate({ silent = true; });
+      generate({ silent = true; });
     end
   end;
 });

@@ -2,9 +2,11 @@ local fzf = require("fzf-lua");
 
 fzf.setup({
   files = {
-    multiprocess = false,
-  },
+    multiprocess = false;
+  };
 });
+
+fzf.register_ui_select();
 
 system.Map(
   "<leader>sh",

@@ -17,21 +17,12 @@ local TAG_KINDS = {
   v = "variable";
 };
 
-local function is_c_source(buffer)
-  if not vim.api.nvim_buf_is_valid(buffer) then
-    return false;
-  end
-
-  local filetype = vim.bo[buffer].filetype;
-  return filetype == "c" or filetype == "cpp";
-end
-
-
 local function current_tag()
-  local tag = vim.fn.expand("<cword>");
+  local tag = vim.fn.expand("<cfile>");
   if tag == "" then
     return nil;
   end
+
   return tag;
 end
 
@@ -46,11 +37,37 @@ local function jump_to_tag(tag, index)
   if not ok then
     system.LogError(tostring(message));
   end
-
-  return ok;
 end
 
-local function try_jump_to_tag_global()
+local function project_definitions()
+  local tags_file = tags.Ensure();
+  if not tags_file then
+    return;
+  end
+
+  fzf.tags_grep_cword({
+    cwd        = project.Root();
+    ctags_file = tags_file;
+    prompt     = "Definitions> ";
+    winopts = {
+      title_pos = "center";
+      height    = 0.70;
+      width     = 0.85;
+      preview = {
+        layout   = "vertical";
+        vertical = "down:55%";
+      };
+    };
+    fzf_opts = {
+      ["--no-multi"] = true;
+      ["--select-1"] = true;
+      ["--info"]     = "inline-right";
+      ["--header"]   = "Project definitions";
+    };
+  });
+end
+
+local function global_definitions()
   local tag = current_tag();
   if not tag then
     return;
@@ -75,7 +92,7 @@ local function try_jump_to_tag_global()
       local location = match.cmd and (":" .. match.cmd) or "";
 
       return string.format(
-        "%-12s %-4s %s%s",
+        "%-12s %-24s %s%s",
         "[" .. kind .. "]",
         match.name or "",
         path,
@@ -83,13 +100,10 @@ local function try_jump_to_tag_global()
       );
     end;
   }, function(_, index)
-    if not index then
-      return;
+    if index then
+      jump_to_tag(tag, index);
     end
-
-    jump_to_tag(tag, index);
   end);
-
 end
 
 local function references()
@@ -97,9 +111,15 @@ local function references()
 end
 
 local function project_symbols()
-  if tags.Ensure() then
-    fzf.tags_live_grep({ cwd = project.Root(); });
+  local tags_file = tags.Ensure();
+  if not tags_file then
+    return;
   end
+
+  fzf.tags_live_grep({
+    cwd        = project.Root();
+    ctags_file = tags_file;
+  });
 end
 
 local function buffer_symbols()
@@ -112,10 +132,6 @@ local function buffer_symbols()
 end
 
 local function attach(buffer)
-  if not is_c_source(buffer) then
-    return;
-  end
-
   system.Map(
     "gO",
     buffer_symbols,
@@ -124,8 +140,14 @@ local function attach(buffer)
   );
   system.Map(
     "gd",
-    try_jump_to_tag_global,
-    "[G]oto [D]efinition",
+    project_definitions,
+    "[G]oto Project [D]efinition",
+    buffer
+  );
+  system.Map(
+    "gD",
+    global_definitions,
+    "[G]oto Global [D]efinition",
     buffer
   );
   system.Map(
