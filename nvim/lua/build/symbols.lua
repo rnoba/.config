@@ -39,34 +39,6 @@ local function jump_to_tag(tag, index)
   end
 end
 
-local function project_definitions()
-  local tags_file = tags.Ensure();
-  if not tags_file then
-    return;
-  end
-
-  fzf.tags_grep_cword({
-    cwd        = project.Root();
-    ctags_file = tags_file;
-    prompt     = "Definitions> ";
-    winopts = {
-      title_pos = "center";
-      height    = 0.70;
-      width     = 0.85;
-      preview = {
-        layout   = "vertical";
-        vertical = "down:55%";
-      };
-    };
-    fzf_opts = {
-      ["--no-multi"] = true;
-      ["--select-1"] = true;
-      ["--info"]     = "inline-right";
-      ["--header"]   = "Project definitions";
-    };
-  });
-end
-
 local function global_definitions()
   local tag = current_tag();
   if not tag then
@@ -140,14 +112,8 @@ local function attach(buffer)
   );
   system.Map(
     "gd",
-    project_definitions,
-    "[G]oto Project [D]efinition",
-    buffer
-  );
-  system.Map(
-    "gD",
     global_definitions,
-    "[G]oto Global [D]efinition",
+    "[G]oto Project [D]efinition",
     buffer
   );
   system.Map(
