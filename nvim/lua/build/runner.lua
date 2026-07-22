@@ -58,7 +58,7 @@ local function finish(build_file, raw_result)
     ui.ClearResults();
   end
 
-  log_result(build_file, parsed);
+  -- log_result(build_file, parsed);
 end
 
 local function build_stop(options)
