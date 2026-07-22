@@ -139,7 +139,7 @@ local function build_run()
     end;
   });
 
-  system.LogInfo("Building " .. build_file.name .. "...");
+  -- system.LogInfo("Building " .. build_file.name .. "...");
 end
 
 local function build_run_or_stop()
