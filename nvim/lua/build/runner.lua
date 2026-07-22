@@ -11,18 +11,6 @@ local function elapsed_time()
   return string.format("%.2fs", elapsed_ms / 1000);
 end
 
-local function log_result(build_file, parsed)
-  local message = build_file.name .. ": " .. parsed.message;
-
-  if parsed.level == "error" then
-    system.LogError(message);
-  elseif parsed.level == "warn" then
-    system.LogWarn(message);
-  else
-    system.LogInfo(message);
-  end
-end
-
 local function finish_stopped(build_file, raw_result)
   if not build_output_closed then
     local parsed = result.Parse(raw_result);
@@ -57,8 +45,6 @@ local function finish(build_file, raw_result)
   else
     ui.ClearResults();
   end
-
-  -- log_result(build_file, parsed);
 end
 
 local function build_stop(options)
