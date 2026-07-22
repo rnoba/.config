@@ -89,3 +89,10 @@ require("plugins");
 require("ui");
 require("build");
 require("lsp");
+
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "c";
+  callback = function(event)
+    vim.treesitter.start(event.buf, "c");
+  end;
+});
