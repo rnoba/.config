@@ -99,6 +99,7 @@ function MODULE.ApplyPanel(window, options)
   vim.wo[window].wrap           = options.wrap == true;
   vim.wo[window].spell          = false;
   vim.wo[window].winfixheight   = options.winfixheight ~= false;
+  vim.wo[window].winfixbuf      = true;
   vim.wo[window].statusline     = "";
 
   vim.wo[window].winhighlight = table.concat({
