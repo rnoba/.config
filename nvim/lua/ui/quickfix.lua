@@ -28,6 +28,7 @@ local function configure(window)
     title,
     string.format("%d item%s", count, count == 1 and "" or "s")
   );
+
   system.Map(
     "<Esc>",
     close,

@@ -38,22 +38,25 @@ end
 local function add_system_tags()
   local directory = system_tags_directory();
   local names = {
-    system.Os() == "Windows" and "windows-c.tags" or "linux-c.tags";
     "system.tags";
   };
 
   for _, name in ipairs(names) do
     local path = vim.fs.joinpath(directory, name);
+
     if vim.fn.filereadable(path) == 1 then
       vim.opt.tags:append(path);
       break;
     end
+
   end
 
   local vulkan_tags = vim.fs.joinpath(directory, "vulkan.tags");
+
   if vim.fn.filereadable(vulkan_tags) == 1 then
     vim.opt.tags:append(vulkan_tags);
   end
+
 end
 
 local function generate(options)
@@ -63,12 +66,12 @@ local function generate(options)
     if not options.silent then
       system.LogError("Required program not found: ctags");
     end
+
     return false;
   end
 
   if running then
-    pending = true;
-    return true;
+    pending = true; return true;
   end
 
   local root      = project.Root();
@@ -98,7 +101,9 @@ local function generate(options)
         if not options.silent then
           system.LogInfo("Tags updated: " .. tags_file);
         end
+
       elseif not options.silent then
+
         local message = vim.trim(table.concat({
           result.stderr or "";
           result.stdout or "";
@@ -108,9 +113,9 @@ local function generate(options)
       end
 
       if pending then
-        pending = false;
-        generate({ silent = true; });
+        pending = false; generate({ silent = true; });
       end
+
     end);
   end);
 
@@ -119,6 +124,7 @@ end
 
 function MODULE.Ensure()
   local tags_file = project_tags_path();
+
   if vim.fn.filereadable(tags_file) == 1 then
     return tags_file;
   end
@@ -135,7 +141,7 @@ add_system_tags();
 vim.api.nvim_create_user_command("TagsUpdate", function()
   generate();
 end, {
-  desc = "Generate C/C++ project tags.";
+desc = "Generate C/C++ project tags.";
 });
 
 vim.api.nvim_create_user_command("TagsClear", function()
@@ -147,7 +153,7 @@ vim.api.nvim_create_user_command("TagsClear", function()
     system.LogWarn("Could not remove: " .. tags_file);
   end
 end, {
-  desc = "Remove the project tags file.";
+desc = "Remove the project tags file.";
 });
 
 vim.api.nvim_create_autocmd("BufWritePost", {

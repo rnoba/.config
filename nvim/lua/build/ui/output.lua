@@ -127,9 +127,9 @@ function MODULE.Record(output, options)
 
   lines = vim.deepcopy(output or {});
   info = {
-    name   = options.name or "Build";
+    name   = options.name   or "Build";
     status = options.status or "output";
-    group  = options.group or "RnobaPanelMuted";
+    group  = options.group  or "RnobaPanelMuted";
   };
 
   if window and vim.api.nvim_win_is_valid(window) then

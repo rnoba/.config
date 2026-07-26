@@ -9,10 +9,10 @@ local closing_owner = false;
 
 local function owner_is_open()
   return owner_buffer
-  and owner_window
-  and vim.api.nvim_buf_is_valid(owner_buffer)
-  and vim.api.nvim_win_is_valid(owner_window)
-  and vim.api.nvim_win_get_buf(owner_window) == owner_buffer;
+         and owner_window
+         and vim.api.nvim_buf_is_valid(owner_buffer)
+         and vim.api.nvim_win_is_valid(owner_window)
+         and vim.api.nvim_win_get_buf(owner_window) == owner_buffer;
 end
 
 local function close_owned_panels()
