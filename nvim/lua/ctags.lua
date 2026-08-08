@@ -1,6 +1,95 @@
-local fzf     = require("fzf-lua");
 local project = require("build.project");
-local tags    = require("build.tags");
+
+local _MODULE = {};
+
+local PROJECT_TAGS_FILE_NAME = ".tags";
+local C_SOURCE_PATTERNS = {
+  "*.c";
+  "*.h";
+  "*.cc";
+  "*.hh";
+  "*.cpp";
+  "*.hpp";
+  "*.cxx";
+  "*.hxx";
+};
+
+local function project_tags_path()
+  return vim.fs.joinpath(project.Root(), PROJECT_TAGS_FILE_NAME);
+end
+
+local running = false;
+local pending = false;
+
+local function generate(options)
+  local options = options or {};
+  if not vim.fn.executable("ctags") == 1 then
+    return;
+  end
+
+  if running then
+    pending = true; return;
+  end
+
+  local file = project_tags_path();
+  running    = true;
+  vim.system({
+    "ctags";
+    "--languages=C,C++";
+    "--sort=yes";
+    "--exclude=.git";
+    "--exclude=build";
+    "--exclude=.cache";
+    "-R";
+    "-f";
+    file;
+    ".";
+  },
+  {  
+    cwd  = project.Root();
+    text = true;
+  },
+  function(result)
+    vim.schedule(function()
+      running = false;
+
+      if result.code == 0 then
+        if not options.silent then
+          base.LogInfo("tags updated: " .. file);
+        end
+      else
+        base.LogInfo("ctags failed: " .. tostring(result.stderr));
+      end
+
+      if pending then
+        pending = false;
+        generate({ silent = true; });
+      end
+    end);
+  end);
+end
+
+local function ensure() 
+  local file = project_tags_path();
+  if vim.fn.filereadable(file) == 1 then
+    return file;
+  end
+  generate({ silent = true; });
+  return nil;
+end
+
+vim.opt.tags:prepend("./.tags;");
+
+vim.api.nvim_create_autocmd("BufWritePost", {
+  group   = vim.api.nvim_create_augroup("rnoba-ctags-update", { clear = true; });
+  pattern = C_SOURCE_PATTERNS;
+  callback = function()
+    generate();
+  end
+});
+
+--
+local fzf = require("fzf-lua");
 
 local TAG_KINDS = {
   c = "class";
@@ -22,20 +111,17 @@ local function current_tag()
   if tag == "" then
     return nil;
   end
-
   return tag;
 end
 
 local function jump_to_tag(tag, index)
   local command = "tag " .. vim.fn.escape(tag, [[ \|]]);
-
   if index then
     command = index .. command;
   end
-
   local ok, message = pcall(vim.cmd, command);
   if not ok then
-    system.LogError(tostring(message));
+    base.LogError(tostring(message));
   end
 end
 
@@ -47,7 +133,7 @@ local function global_definitions()
 
   local matches = vim.fn.taglist("^" .. vim.pesc(tag) .. "$");
   if #matches == 0 then
-    system.LogWarn("Could not find tag: '" .. tag .. "'");
+    base.LogWarn("Could not find tag: '" .. tag .. "'");
     return;
   end
 
@@ -95,8 +181,8 @@ local function project_symbols()
 end
 
 local function buffer_symbols()
-  if not system.TestProgram("ctags") then
-    system.LogError("Required program not found: ctags");
+  if not base.TestProgram("ctags") then
+    base.LogError("Required program not found: ctags");
     return;
   end
 
@@ -104,25 +190,25 @@ local function buffer_symbols()
 end
 
 local function attach(buffer)
-  system.Map(
+  base.Map(
     "gO",
     buffer_symbols,
     "Open Document Symbols",
     buffer
   );
-  system.Map(
+  base.Map(
     "gd",
     global_definitions,
     "[G]oto Project [D]efinition",
     buffer
   );
-  system.Map(
+  base.Map(
     "gr",
     references,
     "[G]oto [R]eferences",
     buffer
   );
-  system.Map(
+  base.Map(
     "<leader>ws",
     project_symbols,
     "[W]orkspace [S]ymbols",
@@ -142,3 +228,9 @@ vim.api.nvim_create_autocmd("FileType", {
     attach(event.buf);
   end;
 });
+
+function _MODULE.generate(options)
+  generate(options);
+end
+
+return _MODULE;

@@ -1,10 +1,19 @@
-local MODULE = {};
+local _MODULE = {};
+
+local PANEL_HIGHLIGHTS = table.concat({
+  "Normal:RnobaPanelNormal";
+  "NormalNC:RnobaPanelNormalNC";
+  "EndOfBuffer:RnobaPanelEndOfBuffer";
+  "CursorLine:RnobaPanelCursorLine";
+  "QuickFixLine:RnobaPanelCursorLine";
+  "WinSeparator:RnobaPanelSeparator";
+}, ",");
 
 local function statusline_escape(value)
   return tostring(value):gsub("%%", "%%%%");
 end
 
-function MODULE.WindowSetStyles(window, options)
+function _MODULE.Window(window, options)
   options = options or {};
 
   vim.wo[window].number         = false;
@@ -21,18 +30,10 @@ function MODULE.WindowSetStyles(window, options)
   vim.wo[window].winfixheight   = options.winfixheight ~= false;
   vim.wo[window].winfixbuf      = true;
   vim.wo[window].statusline     = "";
-
-  vim.wo[window].winhighlight = table.concat({
-    "Normal:RnobaPanelNormal";
-    "NormalNC:RnobaPanelNormalNC";
-    "EndOfBuffer:RnobaPanelEndOfBuffer";
-    "CursorLine:RnobaPanelCursorLine";
-    "QuickFixLine:RnobaPanelCursorLine";
-    "WinSeparator:RnobaPanelSeparator";
-  }, ",");
+  vim.wo[window].winhighlight   = PANEL_HIGHLIGHTS;
 end
 
-function MODULE.WindowSetWinbar(window, title, right, right_highlight)
+function _MODULE.Winbar(window, title, right, right_highlight)
   local parts = {
     "%#RnobaPanelWinBar#";
     statusline_escape(title);
@@ -46,21 +47,7 @@ function MODULE.WindowSetWinbar(window, title, right, right_highlight)
   end
 
   parts[#parts + 1] = "%*";
-
-  vim.w[window].rnoba_winbar_owner = "panel";
   vim.wo[window].winbar = table.concat(parts);
 end
 
-function MODULE.FileWinbar()
-  return table.concat({
-    "%#WinBar# ";
-    "%f";
-    " %m";
-    "%r";
-    "%=";
-    "%l:%c";
-    "  %P ";
-  });
-end
-
-return MODULE;
+return _MODULE;

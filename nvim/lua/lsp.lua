@@ -65,13 +65,7 @@ local SERVERS = {
     end;
 
     test = function()
-      local result = system.TestProgram("bunx");
-
-      if not result then
-        system.LogError("Could not find required program for TypeScript LSP: 'bunx'");
-      end
-
-      return result;
+      return vim.fn.executable("bunx") == 1;
     end;
   };
   nixd = {
@@ -85,7 +79,7 @@ local SERVERS = {
     };
 
     test = function()
-      return system.TestProgram("nixd");
+      return vim.fn.executable("nixd") == 1;
     end;
   };
 
@@ -100,11 +94,7 @@ local SERVERS = {
       "lua";
     };
     test = function()
-      local result = system.TestProgram("lua-language-server");
-      if not result then
-        system.LogError("Could not find required program for Lua LSP: 'lua-language-server'");
-      end
-      return result;
+      return vim.fn.executable("lua-language-server") == 1;
     end;
 
     root_markers = {
@@ -151,63 +141,63 @@ vim.api.nvim_create_autocmd("LspAttach", {
       return;
     end
 
-    system.Map(
+    base.Map(
       "gO",
       fzf.lsp_document_symbols,
       "Open Document Symbols",
       event.buf
     );
 
-    system.Map(
+    base.Map(
       "gd",
       fzf.lsp_definitions,
       "[G]oto [D]efinition",
       event.buf
     );
 
-    system.Map(
+    base.Map(
       "gr",
       fzf.lsp_references,
       "[G]oto [R]eferences",
       event.buf
     );
 
-    system.Map(
+    base.Map(
       "gu",
       fzf.lsp_implementations,
       "[G]oto [I]mplementation",
       event.buf
     );
 
-    system.Map(
+    base.Map(
       "<leader>D",
       fzf.lsp_typedefs,
       "Type [D]efinition",
       event.buf
     );
 
-    system.Map(
+    base.Map(
       "<leader>ws",
       fzf.lsp_live_workspace_symbols,
       "[W]orkspace [S]ymbols",
       event.buf
     );
 
-    system.Map(
+    base.Map(
       "<leader>rn",
       vim.lsp.buf.rename,
       "[R]e[n]ame",
       event.buf
     );
 
-    system.Map(
+    base.Map(
       "<leader>ca",
       vim.lsp.buf.code_action,
       "[C]ode [A]ction",
       event.buf
     );
 
-    system.Map(
+    base.Map(
       "gD",
       vim.lsp.buf.declaration,
       "[G]oto [D]eclaration",
@@ -245,7 +235,7 @@ vim.api.nvim_create_autocmd("LspAttach", {
         group = highlight_group;
 
         callback = function(args)
-          if not system.IsFileBuffer(args.buf) then
+          if not base.IsFileBuffer(args.buf) then
             return;
           end
 
@@ -282,7 +272,7 @@ vim.api.nvim_create_autocmd("LspAttach", {
     end
 
     if client_supports_method(vim.lsp.protocol.Methods.textDocument_inlayHint) then
-      system.Map(
+      base.Map(
         "<leader>th",
         function()
           local enabled = vim.lsp.inlay_hint.is_enabled({
