@@ -181,12 +181,9 @@ local function project_symbols()
 end
 
 local function buffer_symbols()
-  if not base.TestProgram("ctags") then
-    base.LogError("Required program not found: ctags");
-    return;
+  if vim.fn.executable("ctags") == 1 then
+    fzf.btags({ cwd = project.Root(); });
   end
-
-  fzf.btags({ cwd = project.Root(); });
 end
 
 local function attach(buffer)
